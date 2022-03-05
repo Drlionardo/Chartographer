@@ -8,3 +8,6 @@ target
 
 # OS specific files
 .DS_store
+
+# Test image dir
+/src/main/resources/testDir/

@@ -3,10 +3,10 @@ package ru.kontur.intern.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.kontur.intern.exception.ImageNotFoundException;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +28,7 @@ public class ImageService {
                 e.printStackTrace();
             }
         }
-        
+
         try {
             ImageIO.write(image, "bmp", new File(path + "/" + id+ ".bmp"));
         } catch (IOException e) {
@@ -41,11 +41,31 @@ public class ImageService {
     public void fillCharta(int width, int height, int x, int y, MultipartFile image) {
     }
 
-    public File getChartaPart(String id, int width, int height, int x, int y) {
-        return new File("static/test_image.bmp");
+    public BufferedImage getChartaPart(String id, int width, int height, int x, int y) {
+        BufferedImage sourceImage = readImage(id);
+        //todo: fix outside of Raster error
+        BufferedImage imagePart = sourceImage.getSubimage(x, y, width, height);
+        return imagePart;
 
     }
 
     public void deleteCharta(String id) {
+        Path chartaPath = Path.of(String.format("%s/%s.bmp",path, id));
+        if(Files.exists(chartaPath)) {
+            try {
+                Files.delete(chartaPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private BufferedImage readImage(String id) {
+        String imagePath = String.format("%s/%s.bmp",path, id);
+        try {
+            return ImageIO.read(new File(imagePath));
+        } catch (IOException e) {
+            throw new ImageNotFoundException(imagePath);
+        }
     }
 }

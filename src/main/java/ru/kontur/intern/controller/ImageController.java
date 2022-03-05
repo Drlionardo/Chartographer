@@ -13,7 +13,7 @@ import ru.kontur.intern.service.ImageService;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import java.io.File;
+import java.awt.image.BufferedImage;
 import java.net.URI;
 
 @Validated
@@ -46,7 +46,7 @@ public class ImageController {
                                            @RequestParam @Min(1) @Max(5000) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y) {
-        File chartaPart = imageService.getChartaPart(id, width, height, x, y);
+        BufferedImage chartaPart = imageService.getChartaPart(id, width, height, x, y);
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.asMediaType(MimeType.valueOf("image/bmp")))
