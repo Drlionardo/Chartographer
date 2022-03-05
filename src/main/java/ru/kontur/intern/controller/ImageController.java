@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import java.io.File;
 import java.net.URI;
 
 @Validated
@@ -42,7 +43,8 @@ public class ImageController {
                                            @RequestParam @Min(1) @Max(5000) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y) {
-        return ResponseEntity.ok().build();
+        File testImage = new File("static/test_image.bmp");
+        return ResponseEntity.ok().body(testImage);
     }
 
     @DeleteMapping("/chartas/{id}")
