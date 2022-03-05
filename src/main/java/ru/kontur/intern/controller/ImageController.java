@@ -1,5 +1,6 @@
 package ru.kontur.intern.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +8,7 @@ import org.springframework.util.MimeType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.kontur.intern.service.ImageService;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Max;
@@ -16,11 +18,14 @@ import java.net.URI;
 
 @Validated
 @RestController
+@AllArgsConstructor
 public class ImageController {
+    private ImageService imageService;
     @PostMapping("/chartas/")
     public ResponseEntity<String> createCharta(@RequestParam @Max(20000) @Min(1) int width,
                                                @RequestParam @Max(50000) @Min(1) int height) {
-        return ResponseEntity.created(URI.create("")).body("");
+        String chartaId = imageService.createCharta(width, height);
+        return ResponseEntity.created(URI.create("/chartas/" + chartaId)).body(chartaId);
     }
 
     @PostMapping("/chartas/{id}/")
@@ -30,10 +35,8 @@ public class ImageController {
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y,
                                         @RequestParam("image") MultipartFile image) {
-        return ResponseEntity
-                .ok()
-                .contentType(MediaType.asMediaType(MimeType.valueOf("image/bmp")))
-                .body(image.getResource());
+        imageService.fillCharta(width, height, x, y, image);
+        return ResponseEntity.ok().build();
     }
 
 
@@ -43,12 +46,16 @@ public class ImageController {
                                            @RequestParam @Min(1) @Max(5000) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y) {
-        File testImage = new File("static/test_image.bmp");
-        return ResponseEntity.ok().body(testImage);
+        File chartaPart = imageService.getChartaPart(id, width, height, x, y);
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.asMediaType(MimeType.valueOf("image/bmp")))
+                .body(chartaPart);
     }
 
     @DeleteMapping("/chartas/{id}")
-    public ResponseEntity<Void> deleteCharta() {
+    public ResponseEntity<Void> deleteCharta(@PathVariable String id) {
+        imageService.deleteCharta(id);
         return ResponseEntity.ok().build();
     }
 
