@@ -12,10 +12,12 @@ import ru.kontur.intern.exception.IllegalImageSizeException;
 import ru.kontur.intern.exception.ImageNotFoundException;
 import ru.kontur.intern.service.ImageService;
 
+import javax.imageio.ImageIO;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.URI;
 
 @Validated
@@ -26,7 +28,7 @@ public class ImageController {
     @PostMapping("/chartas/")
     public ResponseEntity<String> createCharta(@RequestParam @Max(20000) @Min(1) int width,
                                                @RequestParam @Max(50000) @Min(1) int height) {
-        String chartaId = imageService.createCharta(width, height);
+        String chartaId = imageService.createImage(width, height);
         return ResponseEntity.created(URI.create("/chartas/" + chartaId)).body(chartaId);
     }
 
@@ -36,8 +38,9 @@ public class ImageController {
                                            @RequestParam @Min(1) @Max(50000) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y,
-                                        @RequestParam("image") MultipartFile image) {
-        imageService.fillCharta(id, width, height, x, y, image);
+                                        @RequestParam("image") MultipartFile image) throws IOException {
+        var source =  ImageIO.read(image.getInputStream());
+        imageService.fillImage(id, width, height, x, y, source);
         return ResponseEntity.ok().build();
     }
 
@@ -48,7 +51,7 @@ public class ImageController {
                                            @RequestParam @Min(1) @Max(5000) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y) {
-        BufferedImage chartaPart = imageService.getChartaPart(id, width, height, x, y);
+        BufferedImage chartaPart = imageService.getImagePart(id, width, height, x, y);
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.asMediaType(MimeType.valueOf("image/bmp")))
@@ -57,7 +60,7 @@ public class ImageController {
 
     @DeleteMapping("/chartas/{id}")
     public ResponseEntity<Void> deleteCharta(@PathVariable String id) {
-        imageService.deleteCharta(id);
+        imageService.deleteImage(id);
         return ResponseEntity.ok().build();
     }
 
