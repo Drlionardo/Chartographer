@@ -19,6 +19,10 @@ import javax.validation.constraints.Min;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
+import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_WIDTH_LIMIT;
+import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_HEIGHT_LIMIT;
+import static ru.kontur.intern.config.ImageSizeConfig.IMAGE_SEGMENT_WIDTH_LIMIT;
+import static ru.kontur.intern.config.ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT;
 
 @Validated
 @RestController
@@ -26,16 +30,16 @@ import java.net.URI;
 public class ImageController {
     private ImageService imageService;
     @PostMapping("/chartas/")
-    public ResponseEntity<String> createCharta(@RequestParam @Max(20000) @Min(1) int width,
-                                               @RequestParam @Max(50000) @Min(1) int height) {
+    public ResponseEntity<String> createCharta(@RequestParam @Max(FULL_IMAGE_WIDTH_LIMIT) @Min(1) int width,
+                                               @RequestParam @Max(FULL_IMAGE_HEIGHT_LIMIT) @Min(1) int height) {
         String chartaId = imageService.createImage(width, height);
         return ResponseEntity.created(URI.create("/chartas/" + chartaId)).body(chartaId);
     }
 
     @PostMapping("/chartas/{id}/")
     public ResponseEntity<?> fillCharta(@PathVariable String id,
-                                           @RequestParam @Min(1) @Max(20000) int width,
-                                           @RequestParam @Min(1) @Max(50000) int height,
+                                           @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
+                                           @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y,
                                         @RequestParam("image") MultipartFile image) throws IOException {
@@ -47,8 +51,8 @@ public class ImageController {
 
     @GetMapping("/chartas/{id}/")
     public ResponseEntity<?> getChartaPart(@PathVariable String id,
-                                           @RequestParam @Min(1) @Max(5000) int width,
-                                           @RequestParam @Min(1) @Max(5000) int height,
+                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_WIDTH_LIMIT) int width,
+                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_HEIGHT_LIMIT) int height,
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y) {
         BufferedImage chartaPart = imageService.getImagePart(id, width, height, x, y);
@@ -73,5 +77,4 @@ public class ImageController {
     public ResponseEntity<String> handleImageNotFoundException(ImageNotFoundException e) {
         return new ResponseEntity<>(String.format("Image not found by id: %s", e.getMessage()), HttpStatus.NOT_FOUND);
     }
-
 }
