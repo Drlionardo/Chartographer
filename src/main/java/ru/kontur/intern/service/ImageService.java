@@ -59,10 +59,12 @@ public class ImageService {
 
     public BufferedImage getChartaPart(String id, int width, int height, int x, int y) {
         BufferedImage sourceImage = readImage(id);
+        if(x > sourceImage.getWidth() || y > sourceImage.getHeight()) {
+            throw new IllegalImageSizeException(width, x, height, y);
+        }
         //todo: fix outside of Raster error
         BufferedImage imagePart = sourceImage.getSubimage(x, y, width, height);
         return imagePart;
-
     }
 
     public void deleteCharta(String id) {

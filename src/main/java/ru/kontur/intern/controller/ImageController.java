@@ -37,7 +37,6 @@ public class ImageController {
                                            @RequestParam @Min(0) int x,
                                            @RequestParam @Min(0) int y,
                                         @RequestParam("image") MultipartFile image) {
-        //validate image w,h with width, height
         imageService.fillCharta(id, width, height, x, y, image);
         return ResponseEntity.ok().build();
     }
