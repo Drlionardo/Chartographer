@@ -38,7 +38,19 @@ public class ImageService {
         return id;
     }
 
-    public void fillCharta(int width, int height, int x, int y, MultipartFile image) {
+    public void fillCharta(String id, int width, int height, int x, int y, MultipartFile image) {
+        BufferedImage target = readImage(id);
+        BufferedImage part;
+        try {
+            part = ImageIO.read(image.getInputStream());
+            target.getGraphics().drawImage(part, x, y, null);
+            String targetPath = String.format("%s/%s.bmp",path, id);
+            ImageIO.write(target,"bmp", new File(targetPath));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     public BufferedImage getChartaPart(String id, int width, int height, int x, int y) {
