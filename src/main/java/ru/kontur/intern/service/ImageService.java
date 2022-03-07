@@ -3,6 +3,7 @@ package ru.kontur.intern.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.kontur.intern.exception.IllegalImageSizeException;
 import ru.kontur.intern.exception.ImageNotFoundException;
 
 import javax.imageio.ImageIO;
@@ -39,13 +40,16 @@ public class ImageService {
     }
 
     public void fillCharta(String id, int width, int height, int x, int y, MultipartFile image) {
-        BufferedImage target = readImage(id);
-        BufferedImage part;
         try {
-            part = ImageIO.read(image.getInputStream());
-            target.getGraphics().drawImage(part, x, y, null);
-            String targetPath = String.format("%s/%s.bmp",path, id);
-            ImageIO.write(target,"bmp", new File(targetPath));
+            var imagePart = ImageIO.read(image.getInputStream());
+            if(imagePart.getHeight() != height || imagePart.getWidth() != width) {
+                throw new IllegalImageSizeException(imagePart.getWidth(), width, imagePart.getHeight(), height);
+            } else {
+                BufferedImage target = readImage(id);
+                target.getGraphics().drawImage(imagePart, x, y, null);
+                String targetPath = String.format("%s/%s.bmp", path, id);
+                ImageIO.write(target, "bmp", new File(targetPath));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

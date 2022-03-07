@@ -8,6 +8,8 @@ import org.springframework.util.MimeType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.kontur.intern.exception.IllegalImageSizeException;
+import ru.kontur.intern.exception.ImageNotFoundException;
 import ru.kontur.intern.service.ImageService;
 
 import javax.validation.ConstraintViolationException;
@@ -60,9 +62,14 @@ public class ImageController {
         return ResponseEntity.ok().build();
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException e) {
+    @ExceptionHandler({ConstraintViolationException.class, IllegalImageSizeException.class})
+    public ResponseEntity<String> handleBadRequest(Exception e) {
         return new ResponseEntity<>(String.format("Validation error: %s", e.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(ImageNotFoundException.class)
+    public ResponseEntity<String> handleImageNotFoundException(ImageNotFoundException e) {
+        return new ResponseEntity<>(String.format("Image not found by id: %s", e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
 }
