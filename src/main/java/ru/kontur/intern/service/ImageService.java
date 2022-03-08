@@ -29,7 +29,7 @@ public class ImageService {
 
     public BufferedImage getImagePart(String id, int width, int height, int x, int y) {
         BufferedImage sourceImage = imageRepo.readImage(id);
-        if (x > sourceImage.getWidth() || y > sourceImage.getHeight()) {
+        if (x >= sourceImage.getWidth() || y >= sourceImage.getHeight()) {
             throw new IllegalImageSizeException(width, x, height, y);
         }
 
@@ -37,7 +37,8 @@ public class ImageService {
 
         int sourceWidth = Math.min(width, sourceImage.getWidth() - x);
         int sourceHeight = Math.min(width, sourceImage.getHeight() - y);
-        imagePart.getGraphics().drawImage(sourceImage,0,0, sourceWidth, sourceHeight, null);
+        imagePart.getGraphics().drawImage(sourceImage.getSubimage(x, y, sourceWidth, sourceHeight),
+                0,0,null);
         return imagePart;
     }
 
