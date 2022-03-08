@@ -3,6 +3,7 @@ package ru.kontur.intern.repo;
 import com.google.common.util.concurrent.Striped;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import ru.kontur.intern.exception.ImageNotFoundException;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
@@ -52,11 +53,10 @@ public class ImageRepo {
             lock.lock();
             return ImageIO.read(new File(imagePath));
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ImageNotFoundException(imagePath);
         } finally {
             lock.unlock();
         }
-        return null;
     }
 
     public void updateImage(String id, BufferedImage target) {

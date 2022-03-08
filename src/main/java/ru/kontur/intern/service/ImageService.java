@@ -17,7 +17,7 @@ public class ImageService {
         return imageRepo.saveImage(image);
     }
 
-    public void fillImage(String targetId, int width, int height, int x, int y, BufferedImage source) {
+    public void insertImage(String targetId, int width, int height, int x, int y, BufferedImage source) {
         if (source.getHeight() != height || source.getWidth() != width) {
             throw new IllegalImageSizeException(source.getWidth(), width, source.getHeight(), height);
         } else {

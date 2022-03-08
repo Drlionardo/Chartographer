@@ -29,41 +29,42 @@ import static ru.kontur.intern.config.ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT
 @AllArgsConstructor
 public class ImageController {
     private ImageService imageService;
+
     @PostMapping("/chartas/")
-    public ResponseEntity<String> createCharta(@RequestParam @Max(FULL_IMAGE_WIDTH_LIMIT) @Min(1) int width,
-                                               @RequestParam @Max(FULL_IMAGE_HEIGHT_LIMIT) @Min(1) int height) {
-        String chartaId = imageService.createImage(width, height);
-        return ResponseEntity.created(URI.create("/chartas/" + chartaId)).body(chartaId);
+    public ResponseEntity<String> createImage(@RequestParam @Max(FULL_IMAGE_WIDTH_LIMIT) @Min(1) int width,
+                                              @RequestParam @Max(FULL_IMAGE_HEIGHT_LIMIT) @Min(1) int height) {
+        String imageId = imageService.createImage(width, height);
+        return ResponseEntity.created(URI.create("/chartas/" + imageId)).body(imageId);
     }
 
     @PostMapping("/chartas/{id}/")
-    public ResponseEntity<?> fillCharta(@PathVariable String id,
-                                           @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
-                                           @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
-                                           @RequestParam @Min(0) int x,
-                                           @RequestParam @Min(0) int y,
-                                        @RequestParam("image") MultipartFile image) throws IOException {
+    public ResponseEntity<?> insertImage(@PathVariable String id,
+                                         @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
+                                         @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
+                                         @RequestParam @Min(0) int x,
+                                         @RequestParam @Min(0) int y,
+                                         @RequestParam("image") MultipartFile image) throws IOException {
         var source =  ImageIO.read(image.getInputStream());
-        imageService.fillImage(id, width, height, x, y, source);
+        imageService.insertImage(id, width, height, x, y, source);
         return ResponseEntity.ok().build();
     }
 
 
     @GetMapping("/chartas/{id}/")
-    public ResponseEntity<?> getChartaPart(@PathVariable String id,
-                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_WIDTH_LIMIT) int width,
-                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_HEIGHT_LIMIT) int height,
-                                           @RequestParam @Min(0) int x,
-                                           @RequestParam @Min(0) int y) {
-        BufferedImage chartaPart = imageService.getImagePart(id, width, height, x, y);
+    public ResponseEntity<?> getImagePart(@PathVariable String id,
+                                          @RequestParam @Min(1) @Max(IMAGE_SEGMENT_WIDTH_LIMIT) int width,
+                                          @RequestParam @Min(1) @Max(IMAGE_SEGMENT_HEIGHT_LIMIT) int height,
+                                          @RequestParam @Min(0) int x,
+                                          @RequestParam @Min(0) int y) {
+        BufferedImage imagePart = imageService.getImagePart(id, width, height, x, y);
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.asMediaType(MimeType.valueOf("image/bmp")))
-                .body(chartaPart);
+                .body(imagePart);
     }
 
     @DeleteMapping("/chartas/{id}")
-    public ResponseEntity<Void> deleteCharta(@PathVariable String id) {
+    public ResponseEntity<Void> deleteImage(@PathVariable String id) {
         imageService.deleteImage(id);
         return ResponseEntity.ok().build();
     }
