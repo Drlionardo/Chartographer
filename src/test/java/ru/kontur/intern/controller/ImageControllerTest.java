@@ -46,6 +46,111 @@ class ImageControllerTest {
                     .forEach(File::delete);
         }
     }
+    @Test
+    void multithreadTest() throws Exception {
+        Assertions.assertDoesNotThrow(() -> {
+            String imageId = createImage(100, 100);
+            Thread t1 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 1 fill image start");
+                        var imageContent = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
+                        MockMultipartFile image = new MockMultipartFile("image", "imageName", "image/bmp", imageContent);
+                        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
+                                .file(image)
+                                .param("width", "20")
+                                .param("height", "40")
+                                .param("x", "0")
+                                .param("y", "0"));
+                        System.out.println("Thread 1 fill image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            Thread t2 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 2 fill image start");
+                        var imageContent = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
+                        MockMultipartFile image = new MockMultipartFile("image", "imageName", "image/bmp", imageContent);
+                        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
+                                .file(image)
+                                .param("width", "20")
+                                .param("height", "40")
+                                .param("x", "0")
+                                .param("y", "0"));
+                        System.out.println("Thread 2 fill image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Thread t3 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 3 fill image start");
+
+                        var imageContent = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
+                        MockMultipartFile image = new MockMultipartFile("image", "imageName", "image/bmp", imageContent);
+                        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
+                                .file(image)
+                                .param("width", "20")
+                                .param("height", "40")
+                                .param("x", "0")
+                                .param("y", "0"));
+                        System.out.println("Thread 3 fill image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Thread t4 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 4 read image start");
+                        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 100, 100, 0, 0)));
+                        System.out.println("Thread 4 read image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Thread t5 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 5 read image start");
+                        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 100, 100, 0, 0)));
+                        System.out.println("Thread 5 read image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Thread t6 = new Thread(() -> {
+                for (int i = 0; i < 100; i++) {
+                    try {
+                        System.out.println("Thread 6 read image start");
+                        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 100, 100, 0, 0)));
+                        System.out.println("Thread 6 read image end");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+
+            t1.start();
+            t2.start();
+            t3.start();
+            t4.start();
+            t5.start();
+            t6.start();
+            Thread.sleep(30000);
+        });
+
+    }
 
     @Test
     void fillImageWithIncorrectDimensionReturnsBadRequest() throws Exception {
