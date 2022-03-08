@@ -12,8 +12,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -149,6 +151,35 @@ class ImageControllerTest {
     }
 
     @Test
+    void getPartOverlappingTest() throws Exception {
+        int width = 20;
+        int height = 40;
+        int heightOffset = height / 2;
+        int widthOffset = width / 2;
+        //Before:
+        String imageId = createImage(20, 40);
+        //fill image
+        var imageContent = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
+        MockMultipartFile image = new MockMultipartFile("image", "imageName", "image/bmp", imageContent);
+        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
+                        .file(image)
+                        .param("width", "20")
+                        .param("height", "40")
+                        .param("x", "0")
+                        .param("y", "0"))
+                .andDo(print())
+                .andExpect(status().isOk());
+        //get lower right corner
+        var content = this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, width, height, widthOffset, heightOffset)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        var expectedOutput = Files.newInputStream(Path.of("src/test/resources/TestImage/output/overlapOutput.bmp"));
+        var actualOutput =  new ByteArrayInputStream(content);
+        Assertions.assertTrue(IOUtils.contentEquals(expectedOutput, actualOutput));
+    }
+
+    @Test
     void getPartLargerLanImageReturnsOk() throws Exception {
         int width = 100;
         int height = 50;
@@ -194,13 +225,6 @@ class ImageControllerTest {
         this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, width, height, x ,y)))
                 .andDo(print())
                 .andExpect(status().isOk());
-
-        //getFullImageOutOfRangeOffset
-        x = width + 1;
-        y = height + 1;
-        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, width, height, x ,y)))
-                .andDo(print())
-                .andExpect(status().isOk());
     }
 
     @Test
@@ -213,7 +237,7 @@ class ImageControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
-    @Disabled
+    
     @Test
     void createImageReturnsCreated() throws Exception {
         this.mockMvc.perform(post(String.format("/chartas/?width=%d&height=%d", 1, 1)))

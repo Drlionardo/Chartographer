@@ -32,8 +32,13 @@ public class ImageService {
         if (x > sourceImage.getWidth() || y > sourceImage.getHeight()) {
             throw new IllegalImageSizeException(width, x, height, y);
         }
-        //todo: fix outside of Raster error
-        return sourceImage.getSubimage(x, y, width, height);
+
+        BufferedImage imagePart = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        int sourceWidth = Math.min(width, sourceImage.getWidth() - x);
+        int sourceHeight = Math.min(width, sourceImage.getHeight() - y);
+        imagePart.getGraphics().drawImage(sourceImage,0,0, sourceWidth, sourceHeight, null);
+        return imagePart;
     }
 
     public void deleteImage(String id) {
