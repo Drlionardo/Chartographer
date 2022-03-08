@@ -3,7 +3,6 @@ package ru.kontur.intern.controller;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,10 +11,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -218,13 +217,6 @@ class ImageControllerTest {
         this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, width, height, x ,y)))
                 .andDo(print())
                 .andExpect(status().isOk());
-
-        //getFullImageWithOffset
-        x = 20;
-        y = 50;
-        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, width, height, x ,y)))
-                .andDo(print())
-                .andExpect(status().isOk());
     }
 
     @Test
@@ -237,7 +229,7 @@ class ImageControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
-    
+
     @Test
     void createImageReturnsCreated() throws Exception {
         this.mockMvc.perform(post(String.format("/chartas/?width=%d&height=%d", 1, 1)))
