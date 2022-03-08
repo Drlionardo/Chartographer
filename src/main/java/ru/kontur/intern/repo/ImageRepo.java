@@ -1,9 +1,10 @@
 package ru.kontur.intern.repo;
 
+import com.google.common.util.concurrent.Striped;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-import ru.kontur.intern.exception.ImageNotFoundException;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -11,96 +12,82 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Repository
 public class ImageRepo {
     @Value("#{springApplicationArguments.nonOptionArgs.get(0)}")
     private String folderPath;
+    private Striped<ReadWriteLock> striped = Striped.lazyWeakReadWriteLock(200);
 
-    private ReadWriteLock lock = new ReentrantReadWriteLock();
-    private Lock writeLock = lock.writeLock();
-    private Lock readLock = lock.readLock();
-
-    public String saveImage(BufferedImage image) {
-        try {
-            writeLock.lock();
-            setUp();
-
-            String id = UUID.randomUUID().toString();
+    @PostConstruct
+    private void setUp() {
+        if (!Files.exists(Path.of(folderPath))) {
             try {
-                ImageIO.write(image, "bmp", new File(folderPath + "/" + id + ".bmp"));
+                Files.createDirectory(Path.of(folderPath));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return id;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            writeLock.unlock();
         }
-        return "ERROR";
     }
 
-    private void setUp() {
+    public String saveImage(BufferedImage image) {
+        String id = UUID.randomUUID().toString();
+        var lock = striped.get(id).writeLock();
         try {
-            writeLock.lock();
-            if (!Files.exists(Path.of(folderPath))) {
-                try {
-                    Files.createDirectory(Path.of(folderPath));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            lock.lock();
+            ImageIO.write(image, "bmp", new File(folderPath + "/" + id + ".bmp"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writeLock.unlock();
-
+            lock.unlock();
         }
+        return id;
     }
 
     public BufferedImage readImage(String id) {
-        String imagePath = String.format("%s/%s.bmp", folderPath, id);
+        String imagePath = getImagePathById(id);
+        var lock = striped.get(id).readLock();
         try {
-            readLock.lock();
+            lock.lock();
             return ImageIO.read(new File(imagePath));
-        } catch (IOException e) {
-            throw new ImageNotFoundException(imagePath);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
-            readLock.unlock();
+            lock.unlock();
         }
+        return null;
     }
 
     public void updateImage(String id, BufferedImage target) {
-        String targetPath = String.format("%s/%s.bmp", folderPath, id);
+        String imagePath = getImagePathById(id);
+        var lock = striped.get(id).writeLock();
         try {
-            writeLock.lock();
-            ImageIO.write(target, "bmp", new File(targetPath));
-        } catch (IOException e) {
+            lock.lock();
+            ImageIO.write(target, "bmp", new File(imagePath));
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
     }
 
     public void deleteImage(String id) {
-        Path imagePath = Path.of(String.format("%s/%s.bmp", folderPath, id));
+        Path imagePath = Path.of(getImagePathById(id));
+        var lock = striped.get(id).writeLock();
         try {
-            writeLock.lock();
+            lock.lock();
             if (Files.exists(imagePath)) {
-                try {
-                    Files.delete(imagePath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Files.delete(imagePath);
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            writeLock.unlock();
+            lock.unlock();
         }
+    }
+
+    private String getImagePathById(String id) {
+        return String.format("%s/%s.bmp", folderPath, id);
     }
 }
