@@ -3,6 +3,7 @@ package ru.kontur.intern.service;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.kontur.intern.exception.IllegalImageSizeException;
+import ru.kontur.intern.exception.OffsetOutOfRangeException;
 import ru.kontur.intern.repo.ImageRepo;
 
 import java.awt.image.BufferedImage;
@@ -30,7 +31,7 @@ public class ImageService {
     public BufferedImage getImagePart(String id, int width, int height, int x, int y) {
         BufferedImage sourceImage = imageRepo.readImage(id);
         if (x >= sourceImage.getWidth() || y >= sourceImage.getHeight()) {
-            throw new IllegalImageSizeException(width, x, height, y);
+            throw new OffsetOutOfRangeException(sourceImage.getWidth(), x, sourceImage.getHeight(), y);
         }
 
         BufferedImage imagePart = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);

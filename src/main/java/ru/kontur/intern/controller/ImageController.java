@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.kontur.intern.exception.IllegalImageSizeException;
 import ru.kontur.intern.exception.ImageNotFoundException;
+import ru.kontur.intern.exception.OffsetOutOfRangeException;
 import ru.kontur.intern.service.ImageService;
 
 import javax.imageio.ImageIO;
@@ -69,7 +70,7 @@ public class ImageController {
         return ResponseEntity.ok().build();
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, IllegalImageSizeException.class})
+    @ExceptionHandler({ConstraintViolationException.class, IllegalImageSizeException.class, OffsetOutOfRangeException.class})
     public ResponseEntity<String> handleBadRequest(Exception e) {
         return new ResponseEntity<>(String.format("Validation error: %s", e.getMessage()), HttpStatus.BAD_REQUEST);
     }
@@ -77,5 +78,10 @@ public class ImageController {
     @ExceptionHandler(ImageNotFoundException.class)
     public ResponseEntity<String> handleImageNotFoundException(ImageNotFoundException e) {
         return new ResponseEntity<>(String.format("Image not found by id: %s", e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<String> handleIOException() {
+        return new ResponseEntity<>("Internal server error, please report", HttpStatus.INTERNAL_SERVER_ERROR );
     }
 }
