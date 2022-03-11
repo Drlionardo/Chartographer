@@ -15,20 +15,20 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 @Log4j2
 public class ImageRepo {
-    private final String FOLDER_PATH;
+    private final String STORAGE_PATH;
     private Striped<ReadWriteLock> striped;
 
     public ImageRepo(String storagePath, Integer stripedSize) {
-        this.FOLDER_PATH = storagePath;
+        this.STORAGE_PATH = storagePath;
         this.striped = Striped.lazyWeakReadWriteLock(stripedSize);
 
         setup();
     }
 
     private void setup() {
-        if (!Files.exists(Path.of(FOLDER_PATH))) {
+        if (!Files.exists(Path.of(STORAGE_PATH))) {
             try {
-                Files.createDirectory(Path.of(FOLDER_PATH));
+                Files.createDirectory(Path.of(STORAGE_PATH));
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
@@ -40,7 +40,7 @@ public class ImageRepo {
         var lock = striped.get(id).writeLock();
         try {
             lock.lock();
-            ImageIO.write(image, "bmp", new File(FOLDER_PATH + "/" + id + ".bmp"));
+            ImageIO.write(image, "bmp", new File(STORAGE_PATH + "/" + id + ".bmp"));
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
@@ -91,6 +91,6 @@ public class ImageRepo {
     }
 
     private String getImagePathById(String id) {
-        return String.format("%s/%s.bmp", FOLDER_PATH, id);
+        return String.format("%s/%s.bmp", STORAGE_PATH, id);
     }
 }
