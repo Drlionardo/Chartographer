@@ -7,7 +7,7 @@ import ru.kontur.intern.repo.ImageRepo;
 
 @Configuration
 public class ImageRepoConfig {
-    @Value("${server.tomcat.threads.max}")
+    @Value("${server.tomcat.threads.max:200}")
     public Integer stripedSize;
     public static String storagePath;
 
