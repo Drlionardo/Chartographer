@@ -8,18 +8,25 @@ import org.springframework.util.MimeType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import ru.kontur.intern.exception.IllegalImageSizeException;
+import ru.kontur.intern.exception.ImageNotAttachedException;
 import ru.kontur.intern.exception.ImageNotFoundException;
 import ru.kontur.intern.exception.OffsetOutOfRangeException;
 import ru.kontur.intern.service.ImageService;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+
 import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_WIDTH_LIMIT;
 import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_HEIGHT_LIMIT;
 import static ru.kontur.intern.config.ImageSizeConfig.IMAGE_SEGMENT_WIDTH_LIMIT;
@@ -44,9 +51,11 @@ public class ImageController {
                                          @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
                                          @RequestParam @Min(0) int x,
                                          @RequestParam @Min(0) int y,
-                                         @RequestParam("image") MultipartFile image) throws IOException {
-        var source =  ImageIO.read(image.getInputStream());
-        imageService.insertImage(id, width, height, x, y, source);
+                                         MultipartHttpServletRequest request) throws IOException {
+        String fileKey = request.getFileMap().keySet().stream()
+                .findFirst().orElseThrow(() -> new ImageNotAttachedException("No image attached"));
+        var sourceImage =  ImageIO.read(request.getFileMap().get(fileKey).getInputStream());
+        imageService.insertImage(id, width, height, x, y, sourceImage);
         return ResponseEntity.ok().build();
     }
 
