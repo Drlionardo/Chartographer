@@ -2,11 +2,8 @@ package ru.kontur.intern.repo;
 
 import com.google.common.util.concurrent.Striped;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Repository;
 import ru.kontur.intern.exception.ImageNotFoundException;
 
-import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,17 +14,21 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReadWriteLock;
 
 @Log4j2
-@Repository
 public class ImageRepo {
-    @Value("#{springApplicationArguments.nonOptionArgs.get(0)}")
-    private String folderPath;
-    private Striped<ReadWriteLock> striped = Striped.lazyWeakReadWriteLock(200);
+    private final String FOLDER_PATH;
+    private Striped<ReadWriteLock> striped;
 
-    @PostConstruct
-    private void setUp() {
-        if (!Files.exists(Path.of(folderPath))) {
+    public ImageRepo(String storagePath, Integer stripedSize) {
+        this.FOLDER_PATH = storagePath;
+        this.striped = Striped.lazyWeakReadWriteLock(stripedSize);
+
+        setup();
+    }
+
+    private void setup() {
+        if (!Files.exists(Path.of(FOLDER_PATH))) {
             try {
-                Files.createDirectory(Path.of(folderPath));
+                Files.createDirectory(Path.of(FOLDER_PATH));
             } catch (IOException e) {
                 log.error(e.getMessage());
             }
@@ -39,7 +40,7 @@ public class ImageRepo {
         var lock = striped.get(id).writeLock();
         try {
             lock.lock();
-            ImageIO.write(image, "bmp", new File(folderPath + "/" + id + ".bmp"));
+            ImageIO.write(image, "bmp", new File(FOLDER_PATH + "/" + id + ".bmp"));
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
@@ -90,6 +91,6 @@ public class ImageRepo {
     }
 
     private String getImagePathById(String id) {
-        return String.format("%s/%s.bmp", folderPath, id);
+        return String.format("%s/%s.bmp", FOLDER_PATH, id);
     }
 }
