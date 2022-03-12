@@ -39,7 +39,7 @@ class ImageControllerTest {
 
     @AfterAll
     static void cleanUp() throws IOException {
-        if(Files.exists(Path.of(TEMP_FOLDER_PATH))) {
+        if (Files.exists(Path.of(TEMP_FOLDER_PATH))) {
             Files.walk(Path.of(TEMP_FOLDER_PATH))
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
@@ -50,10 +50,11 @@ class ImageControllerTest {
     @Test
     void insertImageReturnsOk() throws Exception {
         String imageId = createImage(40, 40);
-        MockMultipartFile image = getMockMultipartFile("src/test/resources/TestImage/input/input1.bmp");
+        var content = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
-                        .file(image)
+        mockMvc.perform(post(String.format("/chartas/%s/", imageId))
+                        .content(content)
+                        .contentType("image/bmp")
                         .param("width", "20")
                         .param("height", "40")
                         .param("x", "0")
@@ -62,16 +63,17 @@ class ImageControllerTest {
                 .andExpect(status().isOk());
 
         var expectedOutput = Files.newInputStream(Path.of("src/test/resources/TestImage/output/output1.bmp"));
-        var actualOutput =  Files.newInputStream(Path.of(String.format("%s/%s.bmp", TEMP_FOLDER_PATH, imageId)));
+        var actualOutput = Files.newInputStream(Path.of(String.format("%s/%s.bmp", TEMP_FOLDER_PATH, imageId)));
         Assertions.assertTrue(IOUtils.contentEquals(expectedOutput, actualOutput));
     }
 
     @Test
     void insertImageInvalidIdReturnsNotFound() throws Exception {
-        MockMultipartFile image = getMockMultipartFile("src/test/resources/TestImage/input/input1.bmp");
+        var content = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", NOT_EXISTING_ID))
-                        .file(image)
+        mockMvc.perform(post(String.format("/chartas/%s/", NOT_EXISTING_ID))
+                        .content(content)
+                        .contentType("image/bmp")
                         .param("width", "20")
                         .param("height", "40")
                         .param("x", "0")
@@ -83,10 +85,11 @@ class ImageControllerTest {
     @Test
     void insertImageWithIncorrectDimensionReturnsBadRequest() throws Exception {
         String imageId = createImage(40, 40);
-        MockMultipartFile image = getMockMultipartFile("src/test/resources/TestImage/input/input1.bmp");
+        var content = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/", imageId))
-                        .file(image)
+        mockMvc.perform(post(String.format("/chartas/%s/", imageId))
+                        .content(content)
+                        .contentType("image/bmp")
                         .param("width", "50")
                         .param("height", "50")
                         .param("x", "0")
@@ -98,7 +101,7 @@ class ImageControllerTest {
     @Test
     void getImageFullNoOffsetReturnsOk() throws Exception {
         String imageId = createImage(100, 50);
-        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 100, 50, 0 ,0)))
+        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 100, 50, 0, 0)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -107,18 +110,20 @@ class ImageControllerTest {
     void getImageOverstepBorderReturnsOk() throws Exception {
         ///Fill image
         String imageId = createImage(20, 40);
-        MockMultipartFile image = getMockMultipartFile("src/test/resources/TestImage/input/input1.bmp");
-        mockMvc.perform(MockMvcRequestBuilders.multipart(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 20, 40, 0, 0))
-                        .file(image)).andDo(print());
+        var content = Files.readAllBytes(Path.of("src/test/resources/TestImage/input/input1.bmp"));
+        mockMvc.perform(post(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 20, 40, 0, 0))
+                        .content(content)
+                        .contentType("image/bmp"))
+                .andDo(print());
 
         //Get lower right corner
-        var content = this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 20, 40, 10, 20)))
+        var responseContent = this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, 20, 40, 10, 20)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
 
         var expectedOutput = Files.newInputStream(Path.of("src/test/resources/TestImage/output/overlapOutput.bmp"));
-        var actualOutput =  new ByteArrayInputStream(content);
+        var actualOutput = new ByteArrayInputStream(responseContent);
         Assertions.assertTrue(IOUtils.contentEquals(expectedOutput, actualOutput));
     }
 
@@ -142,11 +147,12 @@ class ImageControllerTest {
     void getImageTooBigReturnBadRequest() throws Exception {
         String imageId = createImage(100, 100);
 
-        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, IMAGE_SEGMENT_WIDTH_LIMIT + 1, IMAGE_SEGMENT_HEIGHT_LIMIT + 1, 0 ,0)))
+        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, IMAGE_SEGMENT_WIDTH_LIMIT + 1, IMAGE_SEGMENT_HEIGHT_LIMIT + 1, 0, 0)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
 
     }
+
     @Test
     void getImageZeroSizeReturnsBadRequest() throws Exception {
         String imageId = createImage(100, 100);
@@ -164,6 +170,7 @@ class ImageControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
+
     @Test
     void getImageNegativeOffsetReturnsBadRequest() throws Exception {
         String imageId = createImage(100, 100);
@@ -181,7 +188,7 @@ class ImageControllerTest {
 
         int widthOffset = imageWidth + 1;
         int heightOffset = imageHeight + 1;
-        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, imageWidth, imageHeight, widthOffset ,heightOffset)))
+        this.mockMvc.perform(get(String.format("/chartas/%s/?width=%d&height=%d&x=%d&y=%d", imageId, imageWidth, imageHeight, widthOffset, heightOffset)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }

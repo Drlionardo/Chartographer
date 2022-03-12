@@ -47,14 +47,12 @@ public class ImageController {
 
     @PostMapping("/chartas/{id}/")
     public ResponseEntity<?> insertImage(@PathVariable String id,
-                                         @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
-                                         @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
-                                         @RequestParam @Min(0) int x,
-                                         @RequestParam @Min(0) int y,
-                                         MultipartHttpServletRequest request) throws IOException {
-        String fileKey = request.getFileMap().keySet().stream()
-                .findFirst().orElseThrow(() -> new ImageNotAttachedException("No image attached"));
-        var sourceImage =  ImageIO.read(request.getFileMap().get(fileKey).getInputStream());
+                                                  @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
+                                                  @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
+                                                  @RequestParam @Min(0) int x,
+                                                  @RequestParam @Min(0) int y,
+                                                  HttpServletRequest request) throws IOException {
+        var sourceImage =  ImageIO.read(request.getInputStream());
         imageService.insertImage(id, width, height, x, y, sourceImage);
         return ResponseEntity.ok().build();
     }
