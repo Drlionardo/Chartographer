@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MimeType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 import ru.kontur.intern.exception.IllegalImageSizeException;
-import ru.kontur.intern.exception.ImageNotAttachedException;
 import ru.kontur.intern.exception.ImageNotFoundException;
 import ru.kontur.intern.exception.OffsetOutOfRangeException;
 import ru.kontur.intern.service.ImageService;
@@ -18,14 +15,11 @@ import ru.kontur.intern.service.ImageService;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
-import javax.validation.ValidationException;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 
 import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_WIDTH_LIMIT;
 import static ru.kontur.intern.config.ImageSizeConfig.FULL_IMAGE_HEIGHT_LIMIT;
@@ -46,7 +40,7 @@ public class ImageController {
     }
 
     @PostMapping("/chartas/{id}/")
-    public ResponseEntity<?> insertImage(@PathVariable String id,
+    public ResponseEntity<String> insertImage(@PathVariable String id,
                                                   @RequestParam @Min(1) @Max(FULL_IMAGE_WIDTH_LIMIT) int width,
                                                   @RequestParam @Min(1) @Max(FULL_IMAGE_HEIGHT_LIMIT) int height,
                                                   @RequestParam @Min(0) int x,
@@ -59,7 +53,7 @@ public class ImageController {
 
 
     @GetMapping("/chartas/{id}/")
-    public ResponseEntity<?> getImagePart(@PathVariable String id,
+    public ResponseEntity<BufferedImage> getImagePart(@PathVariable String id,
                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_WIDTH_LIMIT) int width,
                                           @RequestParam @Min(1) @Max(IMAGE_SEGMENT_HEIGHT_LIMIT) int height,
                                           @RequestParam @Min(0) int x,
@@ -71,7 +65,7 @@ public class ImageController {
                 .body(imagePart);
     }
 
-    @DeleteMapping("/chartas/{id}")
+    @DeleteMapping("/chartas/{id}/")
     public ResponseEntity<Void> deleteImage(@PathVariable String id) {
         imageService.deleteImage(id);
         return ResponseEntity.ok().build();
