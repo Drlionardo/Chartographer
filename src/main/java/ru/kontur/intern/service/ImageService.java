@@ -37,7 +37,7 @@ public class ImageService {
         BufferedImage imagePart = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
         int sourceWidth = Math.min(width, sourceImage.getWidth() - x);
-        int sourceHeight = Math.min(width, sourceImage.getHeight() - y);
+        int sourceHeight = Math.min(height, sourceImage.getHeight() - y);
         imagePart.getGraphics().drawImage(sourceImage.getSubimage(x, y, sourceWidth, sourceHeight),
                 0,0,null);
         return imagePart;
