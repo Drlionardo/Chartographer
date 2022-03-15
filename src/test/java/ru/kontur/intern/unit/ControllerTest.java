@@ -1,6 +1,5 @@
-package ru.kontur.intern;
+package ru.kontur.intern.unit;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,9 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.*;
 
 @WebMvcTest({ImageController.class, ConverterConfig.class})
-public class ControllerTest {
-    public static final String TEST_IMAGE = "src/test/resources/TestImage/input/input1.bmp";
-    public static final String TARGET_IMAGE_ID = "50e5b4b5-c8ae-4994-8b66-bede185261b9";
+public class ControllerTest extends AbstractTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -38,10 +35,10 @@ public class ControllerTest {
 
     @ParameterizedTest()
     @CsvSource({"1,1", "50,50",
-            ImageSizeConfig.FULL_IMAGE_WIDTH_LIMIT+ "," + ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT})
+            ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT+ "," + ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT})
     void getImageOk(String width, String height) throws Exception {
-        var responseImage = ImageIO.read(new File(TEST_IMAGE));
-        doReturn(responseImage).when(service).getImagePart(anyString(), anyInt(), anyInt(), anyInt(), anyInt());
+        var expectedResponseImage = ImageIO.read(new File(TEST_IMAGE));
+        doReturn(expectedResponseImage).when(service).getImagePart(anyString(), anyInt(), anyInt(), anyInt(), anyInt());
 
         var responseContent = mockMvc.perform(get(String.format("/chartas/%s/", TARGET_IMAGE_ID))
                         .param("width", width)
@@ -51,10 +48,8 @@ public class ControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsByteArray();
-
-        var expectedOutput = Files.newInputStream(Path.of(TEST_IMAGE));
-        var actualOutput = new ByteArrayInputStream(responseContent);
-        Assertions.assertTrue(IOUtils.contentEquals(expectedOutput, actualOutput));
+        var actualResponseImage = ImageIO.read(new ByteArrayInputStream(responseContent));
+        Assertions.assertTrue(compareBufferedImages(expectedResponseImage, actualResponseImage));
     }
 
     @ParameterizedTest()
