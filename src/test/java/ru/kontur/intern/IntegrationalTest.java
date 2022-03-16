@@ -29,7 +29,7 @@ class IntegrationalTest {
 
     private static final String TEMP_FOLDER_PATH = "src/test/resources/test";
 
-//    @AfterAll
+    @AfterAll
     static void cleanUp() throws IOException {
         if (Files.exists(Path.of(TEMP_FOLDER_PATH))) {
             Files.walk(Path.of(TEMP_FOLDER_PATH))
