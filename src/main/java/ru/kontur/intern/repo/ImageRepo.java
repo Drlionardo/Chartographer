@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 @Log4j2
@@ -45,12 +46,12 @@ public class ImageRepo {
         String imagePath = getImagePathById(id);
         var lock = striped.get(id).readLock();
         try {
-            lock.lock();
+            acquireLock(lock);
             return ImageIO.read(new File(imagePath));
         } catch (Exception e) {
             throw new ImageNotFoundException(imagePath);
         } finally {
-            lock.unlock();
+            releaseLock(lock);
         }
     }
 
@@ -63,14 +64,14 @@ public class ImageRepo {
         Path imagePath = Path.of(getImagePathById(id));
         var lock = striped.get(id).writeLock();
         try {
-            lock.lock();
+            acquireLock(lock);
             if (Files.exists(imagePath)) {
                 Files.delete(imagePath);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            lock.unlock();
+            releaseLock(lock);
         }
     }
 
@@ -85,12 +86,12 @@ public class ImageRepo {
         String id = UUID.randomUUID().toString();
         var lock = striped.get(id).writeLock();
         try {
-            lock.lock();
+            acquireLock(lock);
             saveImageToDisk(image, getImagePathById(id));
         } catch (IOException e) {
             log.error(e.getMessage());
         } finally {
-            lock.unlock();
+            releaseLock(lock);
         }
         return id;
     }
@@ -106,12 +107,12 @@ public class ImageRepo {
         String imagePath = getImagePathById(id);
         var lock = striped.get(id).writeLock();
         try {
-            lock.lock();
+            acquireLock(lock);
             saveImageToDisk(image, imagePath);
         } catch (IOException e) {
             log.error(e.getMessage());
         } finally {
-            lock.unlock();
+            releaseLock(lock);
         }
     }
 
@@ -124,5 +125,15 @@ public class ImageRepo {
 
     private String getImagePathById(String id) {
         return String.format("%s/%s.bmp", STORAGE_PATH, id);
+    }
+
+    private void releaseLock(Lock lock) {
+        log.debug(Thread.currentThread() + " releases lock " + lock);
+        lock.unlock();
+    }
+
+    private void acquireLock(Lock lock) {
+        log.debug(Thread.currentThread() + " acquires lock " + lock);
+        lock.lock();
     }
 }
