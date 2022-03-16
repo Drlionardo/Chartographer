@@ -3,6 +3,7 @@ package ru.kontur.intern.repo;
 import com.google.common.util.concurrent.Striped;
 import lombok.extern.log4j.Log4j2;
 import ru.kontur.intern.exception.ImageNotFoundException;
+import ru.kontur.intern.exception.NoAppropriateWriterException;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -35,20 +36,11 @@ public class ImageRepo {
         }
     }
 
-    public String saveImage(BufferedImage image) {
-        String id = UUID.randomUUID().toString();
-        var lock = striped.get(id).writeLock();
-        try {
-            lock.lock();
-            ImageIO.write(image, "bmp", new File(STORAGE_PATH + "/" + id + ".bmp"));
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        } finally {
-            lock.unlock();
-        }
-        return id;
-    }
-
+    /**
+     * Reads image from disk
+     *
+     * @param id image id
+     */
     public BufferedImage readImage(String id) {
         String imagePath = getImagePathById(id);
         var lock = striped.get(id).readLock();
@@ -62,19 +54,11 @@ public class ImageRepo {
         }
     }
 
-    public void updateImage(String id, BufferedImage target) {
-        String imagePath = getImagePathById(id);
-        var lock = striped.get(id).writeLock();
-        try {
-            lock.lock();
-            ImageIO.write(target, "bmp", new File(imagePath));
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        } finally {
-            lock.unlock();
-        }
-    }
-
+    /**
+     * Deletes image from disk.
+     *
+     * @param id image id
+     */
     public void deleteImage(String id) {
         Path imagePath = Path.of(getImagePathById(id));
         var lock = striped.get(id).writeLock();
@@ -87,6 +71,54 @@ public class ImageRepo {
             log.error(e.getMessage());
         } finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * Saves image on disk.
+     *
+     * @param image image to save
+     * @return uniq created image identifier
+     * @throws NoAppropriateWriterException if image format does not match bmp RGB
+     */
+    public String saveImage(BufferedImage image) {
+        String id = UUID.randomUUID().toString();
+        var lock = striped.get(id).writeLock();
+        try {
+            lock.lock();
+            saveImageToDisk(image, getImagePathById(id));
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+        return id;
+    }
+
+    /**
+     * Saves image with specified id and overrides previous image.
+     *
+     * @param id    image id
+     * @param image image to save
+     * @throws NoAppropriateWriterException if image format does not match bmp RGB
+     */
+    public void updateImage(String id, BufferedImage image) {
+        String imagePath = getImagePathById(id);
+        var lock = striped.get(id).writeLock();
+        try {
+            lock.lock();
+            saveImageToDisk(image, imagePath);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void saveImageToDisk(BufferedImage target, String imagePath) throws IOException {
+        var isSuccess = ImageIO.write(target, "bmp", new File(imagePath));
+        if (!isSuccess) {
+            throw new NoAppropriateWriterException(target, "bmp");
         }
     }
 

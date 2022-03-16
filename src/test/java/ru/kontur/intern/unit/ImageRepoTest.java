@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.kontur.intern.exception.ImageNotFoundException;
+import ru.kontur.intern.exception.NoAppropriateWriterException;
 import ru.kontur.intern.repo.ImageRepo;
 
 import javax.imageio.ImageIO;
@@ -54,4 +55,9 @@ public class ImageRepoTest extends AbstractTest {
         Assertions.assertThrows(ImageNotFoundException.class, () -> imageRepo.readImage(id));
     }
 
+    @Test
+    void noAppropriateWriterTest() throws IOException {
+        var notBmpRgbImage = ImageIO.read(new File("src/test/resources/TestImage/input/bmpWithAlpha.bmp"));
+        Assertions.assertThrows(NoAppropriateWriterException.class, () -> imageRepo.saveImage(notBmpRgbImage));
+    }
 }

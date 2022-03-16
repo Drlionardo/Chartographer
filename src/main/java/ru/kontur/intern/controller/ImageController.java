@@ -1,6 +1,9 @@
 package ru.kontur.intern.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.kontur.intern.exception.IllegalImageSizeException;
 import ru.kontur.intern.exception.ImageNotFoundException;
+import ru.kontur.intern.exception.NoAppropriateWriterException;
 import ru.kontur.intern.exception.OffsetOutOfRangeException;
 import ru.kontur.intern.service.ImageService;
 
@@ -29,6 +33,7 @@ import static ru.kontur.intern.config.ImageSizeConfig.IMAGE_SEGMENT_HEIGHT_LIMIT
 @Validated
 @RestController
 @AllArgsConstructor
+@Log4j2
 public class ImageController {
     private ImageService imageService;
 
@@ -81,8 +86,9 @@ public class ImageController {
         return new ResponseEntity<>(String.format("Image not found by id: %s", e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<String> handleIOException() {
+    @ExceptionHandler({IOException.class, NoAppropriateWriterException.class})
+    public ResponseEntity<String> handleInternalException(Exception e) {
+        log.error(e.getMessage());
         return new ResponseEntity<>("Internal server error, please report", HttpStatus.INTERNAL_SERVER_ERROR );
     }
 }
