@@ -6,7 +6,7 @@ import ru.kontur.intern.exception.ImageNotFoundException;
 import ru.kontur.intern.exception.NoAppropriateWriterException;
 
 import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +15,11 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
+/**
+ *
+ * This class implements thread-safe CRUD operations with BufferedImages using local storage.
+ * It uses Google Guava Striped to dynamically manage read/write locks
+ */
 @Log4j2
 public class ImageRepo {
     private final String STORAGE_PATH;
