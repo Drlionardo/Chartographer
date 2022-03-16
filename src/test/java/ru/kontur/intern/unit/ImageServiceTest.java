@@ -12,7 +12,8 @@ import ru.kontur.intern.service.ImageService;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 import static org.mockito.Mockito.*;
 
