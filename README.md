@@ -1,72 +1,73 @@
 # Chartographer
 
-От **charta** (*лат.*) или **харта** — одно из названий [папируса](https://ru.wikipedia.org/wiki/Папирус).
+From **charta** (*Latin*) or **harta** — one of the names for [papyrus](https://en.wikipedia.org/wiki/Papyrus).
 
-Необходимо написать сервис **Chartographer** — сервис для восстановления изображений древних свитков и папирусов.
-Изображения растровые и создаются поэтапно (отдельными фрагментами).
-Восстановленное изображение можно получать фрагментами (даже если оно лишь частично восстановленное).
+You need to implement a service called **Chartographer** — a service for reconstructing images of ancient scrolls and papyri.  
+The images are raster-based and created in stages (as separate fragments).  
+The reconstructed image can be retrieved in fragments (even if only partially reconstructed).
 
-Предполагается, что этим сервисом будет одновременно пользоваться множество учёных.
+It is expected that many researchers will use this service simultaneously.
+
 ## HTTP API
 
-Необходимо реализовать 4 HTTP-метода:
+You need to implement 4 HTTP methods:
 
 ```
 POST /chartas/?width={width}&height={height}
 ```
-Создать новое изображение папируса заданного размера (в пикселях),
-где `{width}` и `{height}` — положительные целые числа, не превосходящие `20 000` и `50 000`, соответственно.  
-Тело запроса пустое.  
-В теле ответа возвращается `{id}` — уникальный идентификатор изображения в строковом представлении.  
-Код ответа: `201 Created`.
+Creates a new papyrus image of the specified size (in pixels),  
+where `{width}` and `{height}` are positive integers not exceeding `20,000` and `50,000`, respectively.  
+Request body: empty.  
+Response body: `{id}` — a unique string identifier of the image.  
+Response code: `201 Created`.
 
 ```
 POST /chartas/{id}/?x={x}&y={y}&width={width}&height={height}
 ```
-Сохранить восстановленный фрагмент изображения размера `{width} x {height}` с координатами `({x};{y})`.
-Под координатами подразумевается положение левого верхнего угла фрагмента относительно левого верхнего угла всего изображения.
-Другими словами, левый верхний угол изображения является началом координат, т.е. эта точка имеет координаты `(0;0)`.  
-Тело запроса: изображение в формате `BMP` (цвет в RGB, 24 бита на 1 пиксель).  
-Тело ответа пустое.  
-Код ответа: `200 OK`.
+Saves a reconstructed image fragment of size `{width} x {height}` at coordinates `({x};{y})`.  
+The coordinates refer to the position of the top-left corner of the fragment relative to the top-left corner of the entire image.  
+In other words, the top-left corner of the image is the origin `(0;0)`.  
+Request body: image in `BMP` format (RGB color, 24 bits per pixel).  
+Response body: empty.  
+Response code: `200 OK`.
 
 ```
 GET /chartas/{id}/?x={x}&y={y}&width={width}&height={height}
 ```
-Получить восстановленную часть изображения размера `{width} x {height}` с координатами `({x};{y})`,
-где `{width}` и `{height}` — положительные целые числа, не превосходящие 5 000.
-Под координатами подразумевается положение левого верхнего угла фрагмента относительно левого верхнего угла всего изображения.
-Другими словами, левый верхний угол изображения является началом координат, т.е. эта точка имеет координаты `(0;0)`.  
-Тело ответа: изображение в формате `BMP` (цвет в RGB, 24 бита на 1 пиксель).  
-Код ответа: `200 OK`.
+Retrieves a reconstructed part of the image of size `{width} x {height}` at coordinates `({x};{y})`,  
+where `{width}` and `{height}` are positive integers not exceeding 5,000.  
+The coordinates refer to the position of the top-left corner of the fragment relative to the top-left corner of the entire image.  
+In other words, the top-left corner of the image is the origin `(0;0)`.  
+Response body: image in `BMP` format (RGB color, 24 bits per pixel).  
+Response code: `200 OK`.
 
 ```
 DELETE /chartas/{id}/
 ```
-Удалить изображение с идентификатором `{id}`.  
-Тело запроса и ответа пустое.  
-Код ответа: `200 OK`.
+Deletes the image with the identifier `{id}`.  
+Request and response bodies: empty.  
+Response code: `200 OK`.
 
-### Обработка ошибок
+### Error Handling
 
-1. Запросы по `{id}` изображения, которого не существует, должны завершаться с кодом ответа `404 Not Found`.
-2. Запросы с некорректными параметрами `{width}` или `{height}` должны завершаться с кодом ответа `400 Bad Request`.
-3. Запросы с фрагментами, которые не пересекаются по координатам с изображением, должны завершаться с кодом ответа `400 Bad Request`.
-При этом фрагменты могут *частично* находиться вне границ изображения (см. примечания) — такие запросы считаются корректными.
+1. Requests for a nonexistent image `{id}` must return `404 Not Found`.
+2. Requests with invalid `{width}` or `{height}` parameters must return `400 Bad Request`.
+3. Requests for fragments that do not overlap with the image in terms of coordinates must return `400 Bad Request`.  
+However, fragments may *partially* lie outside the image boundaries (see notes) — such requests are considered valid.
 
-### Примечания
+### Notes
 
-1. Размер изображений не превосходит `20 000 x 50 000`.
-2. Некоторые изображения гарантировано не смогут поместиться целиком в памяти.
-Необходимо предусмотреть возможность хранения данных на диске.
-3. Формат изображений — [BMP](https://ru.wikipedia.org/wiki/BMP). Цветность в RGB (без альфа-канала), 24 бита на пиксель.
-4. В случае, если загружаемый восстановленный фрагмент перекрывает восстановленную ранее часть, то в любом случае применяется новый фрагмент.
-5. Если запрашивается фрагмент, часть которого ещё не восстановлена, то не восстановленные области закрашиваются чёрным цветом.
-Аналогично, чёрным цветом закрашивается та часть фрагмента, которая оказывается вне границ изображения (см. пример ниже).
-6. Если восстанавливаемый фрагмент перекрывает границы изображения, то часть фрагмента вне изображения игнорируется.
-Пример: размер изображения — `50 x 100`, фрагмент с размером `50 x 50` и координатами верхнего левого угла `(25;25)`.
-Правая половина фрагмента игнорируется. Схематически изображено ниже.
- 
+1. Image dimensions do not exceed `20,000 x 50,000`.
+2. Some images are guaranteed to not fit entirely in memory.  
+You must support storing data on disk.
+3. Image format — [BMP](https://en.wikipedia.org/wiki/BMP_file_format). Color in RGB (no alpha channel), 24 bits per pixel.
+4. If a new fragment overlaps a previously restored area, the new fragment is always applied.
+5. If a requested fragment includes parts that are not yet reconstructed, the unreconstructed areas must be filled with black.  
+Similarly, areas outside the image boundaries must also be filled with black (see example below).
+6. If a fragment being saved extends beyond the image boundaries, the out-of-bounds portion is ignored.  
+Example: image size is `50 x 100`, fragment size is `50 x 50`, and its top-left corner is at `(25;25)`.  
+The right half of the fragment is ignored. Schematic representation:
+
 ```
 ╔═════════╗
 ║         ║
@@ -79,23 +80,21 @@ DELETE /chartas/{id}/
 ╚═════════╝
 ```
 
-Ожидается, что решение будет корректно работать в граничных случаях и успешно обрабатывать ошибки.
-Настоятельно рекомендуется покрыть основную функциональность Unit-тестами.
+The implementation is expected to work correctly in edge cases and handle errors gracefully.  
+It is strongly recommended to cover the core functionality with unit tests.
 
-## Требования к оформлению решения
-- Компиляция кода и его исполнение c использованием Java 11.
-- Сборка сервиса при помощи Apache Maven командой `mvn package`.
-- Unit-тесты должны выполняться в процессе сборки.
-- Сервис должен собираться в fat jar, т.е. все зависимости должны быть упакованы внутрь одного jar.
-- Запуск сервиса осуществляется командой `java -jar chartographer-1.0.0.jar /path/to/content/folder` в каталоге `target` проекта,
-где `/path/to/content/folder` – путь до каталога, в котором сервис может хранить данные.
-- Сервис должен принимать HTTP-запросы на стандартном порте (`8080`).
-- Исходный код соответствует [Java Code Conventions](https://www.oracle.com/technetwork/java/codeconventions-150003.pdf)
-и [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
+## Requirements for Implementation
 
-## Информация по тестированию
-Сервис будет запускаться в Docker на *многоядерной* машине.
-Контейнеру будет предоставлено не менее `2 Гбайт` оперативной памяти и не менее `20 Гбайт` места на диске.
+- Code must compile and run with Java 11.
+- Build the service using Apache Maven with the command `mvn package`.
+- Unit tests must be executed during the build.
+- The service should be packaged as a fat JAR — all dependencies included in a single JAR file.
+- The service is run with the command `java -jar chartographer-1.0.0.jar /path/to/content/folder` inside the project's `target` directory,  
+  where `/path/to/content/folder` is the directory used by the service to store data.
+- The service must accept HTTP requests on the standard port (`8080`).
+- Source code must follow [Java Code Conventions](https://www.oracle.com/technetwork/java/codeconventions-150003.pdf)  
+  and the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
 
-Некоторые изображения гарантировано не смогут поместиться целиком в памяти.
-Необходимо предусмотреть возможность хранения данных на диске.
+## Testing Information
+
+The service will be run in Docker on a *multi-core* machine.
